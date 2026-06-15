@@ -6,6 +6,8 @@ func TestDefaultUpstreamAddr(t *testing.T) {
 	tests := []struct {
 		name string
 		env  map[string]string
+		svc  string
+		ns   string
 		args []int
 		want string
 	}{
@@ -27,6 +29,16 @@ func TestDefaultUpstreamAddr(t *testing.T) {
 			},
 			args: []int{10570},
 			want: "agent-iam-office:10570",
+		},
+		{
+			name: "uses concrete service name for tailnet host",
+			env: map[string]string{
+				"ACCOUNT_NAME": "office",
+			},
+			svc:  "scheduling-registry",
+			ns:   "scheduling",
+			args: []int{10220},
+			want: "scheduling-registry-scheduling-office:10220",
 		},
 		{
 			name: "uses kubernetes service discovery in cluster",
@@ -61,7 +73,16 @@ func TestDefaultUpstreamAddr(t *testing.T) {
 				t.Setenv(key, value)
 			}
 
-			got := DefaultUpstreamAddr("agent", "iam", tt.args...)
+			service := tt.svc
+			if service == "" {
+				service = "agent"
+			}
+			namespace := tt.ns
+			if namespace == "" {
+				namespace = "iam"
+			}
+
+			got := DefaultUpstreamAddr(service, namespace, tt.args...)
 			if got != tt.want {
 				t.Fatalf("DefaultUpstreamAddr() = %q, want %q", got, tt.want)
 			}

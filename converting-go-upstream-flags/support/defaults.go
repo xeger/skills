@@ -6,12 +6,15 @@ import (
 )
 
 // DefaultUpstreamAddr provides a useful default for a flag that configures a service dependency.
-// It returns a string of the form `service-namespace-account:port` for services exposed via our
-// development tailnet, or `service.namespace:port` when running inside a Kubernetes cluster.
+// It returns `service.namespace:port` when running in Kubernetes, including Tilt/kind local dev,
+// or `service-namespace-account:port` for host lazy dev via our development tailnet.
 //
 // Using this function to provide default flag values has two benefits:
 //  1. Useful documentation of the purpose of each flag
 //  2. Allows developers to `go run` your service provided all upstreams are reachable via Tailnet
+//
+// Pass the actual Kubernetes Service name and namespace, not a shortened flag or package name:
+// use DefaultUpstreamAddr("scheduling-registry", "scheduling", 10220), not "registry".
 //
 // To use it, make sure your `resolv.conf` search path includes the tailnet where the downstreams
 // are exposed. The Tailscale agent should configure this automatically when you connect.
