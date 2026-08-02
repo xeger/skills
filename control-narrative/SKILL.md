@@ -40,9 +40,12 @@ before composing or reviewing any member content, and
    separately.** Silence is not authorization, and neither is a validated
    draft, a successful publish, or your own judgment that the change is
    ready. An uninstructed deployment to a live facility is the single worst
-   outcome of this role. Before publishing, list earlier
+   outcome of this role. The authorization must come AFTER the user has seen
+   the final change-list — a blanket "go ahead and publish" from before the
+   work does not count. Before publishing, list earlier
    published-but-never-deployed versions (`DeployedAt: null`) and tell the
-   user what a deploy would carry beyond this change.
+   user what a deploy would carry beyond this change; if there are any, get
+   their acknowledgment before proceeding.
 5. **Draft awareness.** Writes target the draft version only. Reads that
    inform a write must target the draft explicitly (`--include-draft true` on
    list; the draft's version string on get — the CLI requires an explicit
