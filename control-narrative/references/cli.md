@@ -39,11 +39,29 @@ Recipe (user id = `https://crossnokaye.com/principal` claim in the JWT, or
 ask the user):
 
     ck-ecp list-user-orgs --user-id <uuid>          # find your org (Name: crossnokaye) and the customer org
-    ck-ecp list-user-facilities --user-id <uuid>    # match ShortName to the URL slug; take OrganizationID + Agents[].AgentID
+    ck-ecp list-user-facilities --user-id <uuid>    # take OrganizationID + Agents[].AgentID
 
-An atlaslive URL `https://atlaslive.io/f/<slug>/facility-config/narratives/
-<version>/instances/<alias>/…` gives the facility slug (matches
-`ShortName`), the narrative version, and the instance alias.
+Facilities can be named several ways; resolve whatever the user gives you
+against the `list-user-facilities` output:
+
+- **Facility short name** (`jolietsouth`) — exact match on `ShortName`.
+- **Display name** ("Joliet South Lineage") — case-insensitive substring
+  match on `DisplayName`; if several match, list them and ask.
+- **`orgShortName-agentShortName`** (common in chats, e.g.
+  `lineage-jolietsouth`) — do NOT naively split on the hyphen: facility
+  short names may themselves contain hyphens (`salemhenningsenct-2`). First
+  try the whole token as a `ShortName`; failing that, for each org `Name`
+  from `list-user-orgs`, if the token starts with `<orgName>-`, strip that
+  prefix and match the remainder against `ShortName`s of facilities whose
+  `OrganizationID` belongs to that org.
+- **atlaslive URL** `https://atlaslive.io/f/<slug>/facility-config/
+  narratives/<version>/instances/<alias>/…` — the slug resolves like the
+  combined notation above, and the path also gives the narrative version and
+  instance alias.
+
+If nothing matches, show the near-misses and ask — never guess a facility.
+Confirm the resolved facility (`DisplayName`, `ShortName`, env) back to the
+user before any write.
 
 Known CLI wart: `list-user-facilities --view extended` fails client-side
 validation (`sheet_id` length) — use the default view.
