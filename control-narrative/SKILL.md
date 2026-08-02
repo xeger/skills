@@ -1,98 +1,133 @@
 ---
 name: control-narrative
-description: Entrypoint for ANY request touching ATLAS narrative instances (L1 control narratives) in the atlaslive.io facility-config UI — designing, creating, modifying, renaming, inspecting, or reviewing instances, inputs, settings, metrics, conditions, actions, outputs, or alarms. Load this FIRST whenever a request mentions a narrative instance, an atlaslive.io facility-config URL, or a member of one; it routes the work to the cheap subagent chain. Do not load control-narrative-recon, -design, or -implementation directly.
+description: Work with ATLAS narrative instances (L1 control narratives) via the ck-ecp CLI — inspecting, designing, creating, modifying, renaming, or reviewing instances and their inputs, settings, metrics, conditions, actions, outputs, or alarms; managing draft site-narrative versions; validating, diffing, publishing, or deploying them. Use whenever a request mentions a narrative instance, a member of one, a site narrative version or draft, or an atlaslive.io facility-config URL. All work happens through ck-ecp; there is no browser flow.
 ---
 
-# Control Narrative (entrypoint / router)
+# Control Narrative (ck-ecp)
 
-You are the conversation-level agent. Your job is to ROUTE, never to execute.
-Browser automation and design reasoning both happen in subagents, chosen for
-cost. You hold only the user's intent and short structured reports.
+A narrative instance is a per-device L1 program evaluated at ~1 Hz by the ATLAS
+agent at a facility. All of its state lives in versioned **site narratives**
+reachable through the `ck-ecp` CLI. You do everything inline — read, design,
+write, verify — with no subagents and no browser. If the API cannot do
+something the user asked for, stop and report; never fall back to the UI.
 
-## Hard rules
+Read `references/cli.md` before running commands, `references/expressions.md`
+before composing or reviewing any member content, and
+`references/instance-schema.md` before any write.
 
-- **Never open a browser tab yourself.** Not to "just check", not to verify a
-  subagent's report. Page content in your context is the single largest
-  avoidable cost in this workflow.
-- **Never load `control-narrative-recon`, `control-narrative-design`, or
-  `control-narrative-implementation` into your own context.** They are
-  subagent skills. Loading one means you are about to do the work yourself.
-- **Never publish** a draft config. Validate ≠ publish. Publishing requires an
-  explicit, unambiguous user instruction and is still a separate deliberate
-  step you confirm first.
-- Require terse, structured subagent reports. Every token a subagent returns
-  is re-read on every subsequent turn of this conversation.
+## Safety rails (read first)
 
-## The chain
+1. **Environment check first.** Before the first real command of a session run
+   `ck-ecp config test` and state which environment is active (`ATLAS_ENV` /
+   `ACCOUNT_NAME`; **unset means production, atlaslive.io**). The CLI has no
+   dry-run and no confirmation prompt — the change-list you show the user IS
+   the confirmation, and it must name the environment.
+2. **Round-trip rule.** `internal-upsert-narrative-instance` is a full
+   replace, not a patch. Its own help text warns: *"If mappings of any of the
+   inputs, settings, computed metrics, conditions, virtual outputs or actions
+   are missing or set to empty then the narrative instance will be updated to
+   set corresponding fields to empty."* Always: GET the draft narrative,
+   extract the target instance's complete body, apply only the change-list
+   edits, send the entire body back. Never send a partial body; never
+   hand-construct a body for an existing instance.
+3. **Read-back verification.** After every write, GET again and diff: edited
+   fields show their NEW values, everything under DO NOT TOUCH is unchanged,
+   and no member collection shrank (compare per-collection counts — a shrink
+   means the round-trip dropped something). Report final expression text from
+   the read-back, not from what you sent.
+4. **Authorization ladder.** Validate is safe and expected. **Publish and
+   deploy each require the user's explicit words in this conversation,
+   separately.** Silence is not authorization, and neither is a validated
+   draft, a successful publish, or your own judgment that the change is
+   ready. An uninstructed deployment to a live facility is the single worst
+   outcome of this role. Before publishing, list earlier
+   published-but-never-deployed versions (`DeployedAt: null`) and tell the
+   user what a deploy would carry beyond this change.
+5. **Draft awareness.** Writes target the draft version only. Reads that
+   inform a write must target the draft explicitly (`--include-draft true` on
+   list; the draft's version string on get — the CLI requires an explicit
+   `--version`). Creating, resetting, or deleting a draft is a user-visible
+   act that needs the user's consent, even though create is idempotent.
+6. **Stop, don't guess.** If current state does not match the change-list's
+   OLD values (member missing, capitalization differs, expression text
+   differs), if an endpoint errors unexpectedly, or if the API lacks a needed
+   capability — stop and report precisely what was and was not done. A
+   stopped run is a success; a guessed edit to a live control narrative is
+   not. Never write from remembered or assumed state; if you have not read it
+   this session since the last write, read it again.
 
-Run these in order. Skip a stage only under the conditions named.
+## Workflow
 
-### 1. Recon — Haiku, read-only
+1. **Orient.** Resolve `--internal-org-id` (your own org's UUID), `--org-id`
+   (the customer org), and `--agent-id` from the user's words or an
+   atlaslive.io URL, per the recipe in `references/cli.md`. Harvest version
+   and instance alias from the URL path when present
+   (`…/narratives/<version>/instances/<alias>/…`). Then the env check.
+2. **Read.** `internal-list-site-narratives --include-draft true` for
+   versions, draft existence, active/latest flags. Then
+   `internal-get-site-narrative --view extended` (filter with jq — big sites
+   exceed a megabyte) for the in-scope instances. Present current state in
+   the state-report grammar from `references/cli.md`. Supporting reads as
+   needed: templates, mapping options, `internal-list-expression-functions`,
+   `list-units`, `internal-list-narrative-references`.
+3. **Design.** Apply `references/expressions.md`. Compose the change-list in
+   the format below, then run the proof checklist against it yourself.
+4. **Confirm.** For any non-trivial change — new members, expression edits,
+   renames, new instances, anything touching an instance the user did not
+   name — show the change-list and the target environment and wait for
+   approval. A trivial single-field edit the user dictated verbatim may
+   proceed once you have stated it.
+5. **Write.** Ensure the draft exists (create only with consent). Round-trip
+   upsert per instance, per rail 2 and `references/instance-schema.md`.
+6. **Verify.** Read-back diff (rail 3), then
+   `internal-validate-draft-site-narrative`. Optionally
+   `diff-site-narrative-versions` for a human-readable draft-vs-published
+   summary.
+7. **Report.** What changed (one line per edit), verbatim final text of every
+   touched expression as read back, per-upsert outcomes, the validate result,
+   anything stopped and why — and end by stating that nothing was published
+   or deployed (or, if explicitly authorized and done, the new version number
+   and deployment confirmation).
 
-Dispatch when you do not already have the current state of the instance(s)
-verbatim in context. Skip only if a recon report earlier in THIS conversation
-still describes the live state (no edits since).
+## Change-list format
 
-    model: haiku
-    prompt: Invoke the `control-narrative-recon` skill, then follow it.
-            Target: <URL>. Scope: <which instances, or "all in the draft">.
-            <Anything specific to extract.>
+Compose changes in this grammar before writing anything:
 
-Returns a structured dump: instance aliases, members with type/unit/default/
-mapping, and every expression verbatim. Read-only; it cannot mutate.
+    INSTANCE: <alias>
+      COLLECTION: <inputs|settings|computed_metrics|conditions|actions|virtual_outputs|alarms|input_mappings|output_mappings|overrides>
+        <Member> . <field> : <old value> -> <new value>
+      COLLECTION: computed_metrics
+        <Member> . expression_text :
+          OLD: <verbatim>
+          NEW: <verbatim>
+    DO NOT TOUCH: <members, collections, instances left alone>
+    VALIDATE: yes
+    PUBLISH: no
 
-### 2. Design — Sonnet, no browser
+For new members give every field: name, type (`number|bool|enum|schedule|
+sequence`), unit (by ShortName — `A`, `ton/h`, `none`), description, default,
+mapping, expression, and for Boolean settings the
+`bool_setting_kind` (`normal` or `one_shot`). State final expression text
+verbatim, character for character, preserving spacing and parenthesization the
+change does not affect.
 
-    model: sonnet
-    prompt: Invoke the `control-narrative-design` skill, then follow it.
-            You have NO browser tools and must not request any.
-            User's intent: <verbatim ask>.
-            Current state (from recon): <paste the recon dump>.
-            Emit the change-list in the format the skill specifies.
+Follow with a short RATIONALE block covering only decisions the user must
+proof: unit choice, setting-vs-literal, a dependency they did not mention. If
+the user's intent conflicts with the conventions in
+`references/expressions.md`, follow the user and note the conflict — their
+call, not yours.
 
-Returns an exact change-list. If the user's ask is a pure mechanical
-transformation you can already state verbatim for every affected field — and
-recon confirmed exactly which fields those are — you may skip this stage and
-write the change-list yourself. When in doubt, dispatch; Sonnet reasoning is
-cheaper than a wrong edit to a live control narrative.
+## Proof checklist
 
-### 3. Proof — you, no tools
+Run this against the change-list before anything mutates:
 
-Check the change-list against the user's ask item by item before anything
-mutates. This is the last gate before live config changes. Look for: members
-the user did not ask to touch, expressions whose references were not updated
-to match a rename, missing units on Number members, anything the design agent
-inferred rather than was told.
-
-### 4. Implement — Haiku, one agent per instance
-
-    model: haiku
-    prompt: Invoke the `control-narrative-implementation` skill, then follow
-            it. Target: <URL for this instance>. The user is already logged
-            into ATLAS in Chrome.
-            Change-list: <the fully resolved list for THIS instance only>.
-            Apply it literally. Stop and report if the UI does not match.
-
-Fan out across instances (they are independent). Serialize within an instance.
-Only ONE agent runs Validate — dispatch it after the implementors report, or
-name one implementor as the validator.
-
-Escalate an implementor to Sonnet only after a Haiku attempt fails on UI
-mechanics, and say what failed in the retry prompt.
-
-### 5. Relay
-
-Report to the user: what changed, the verbatim final text of touched
-expressions, save/validate outcomes, and anything the implementors flagged.
-Tell them nothing was published.
-
-## Failure handling
-
-- **Transient API error (529) mid-implementation**: resume the SAME agent via
-  SendMessage — its transcript survives. Do not respawn; some edits may have
-  landed. Tell it to re-read the page state before continuing.
-- **Implementor stops on a UI mismatch**: that is correct behavior, not a
-  failure. Feed the mismatch back through recon → design, do not tell the
-  implementor to use its judgment.
-- **Friction reports**: implementors report where their skill's instructions
-  were wrong or missing. Fold these into the relevant skill file.
+- Any member the user did not ask to touch?
+- Every rename traced into EVERY expression that references the old name —
+  including the member's own expression when it self-references
+  (accumulators)? Cross-instance references too: other instances can consume
+  this instance's conditions, metrics, and outputs via their input mappings
+  (check `internal-list-narrative-references`).
+- A unit on every `number` member (`none` for dimensionless)?
+- Anything you inferred rather than were told?
+- Re-read the list as a literal-minded executor: any step that requires an
+  inference is a defect — resolve it now.
