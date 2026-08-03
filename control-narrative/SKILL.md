@@ -7,9 +7,11 @@ description: Work with ATLAS narrative instances (L1 control narratives) via the
 
 A narrative instance is a per-device L1 program evaluated at ~1 Hz by the ATLAS
 agent at a facility. All of its state lives in versioned **site narratives**
-reachable through the `ck-ecp` CLI. You do everything inline — read, design,
-write, verify — with no subagents and no browser. If the API cannot do
-something the user asked for, stop and report; never fall back to the UI.
+reachable through the `ck-ecp` CLI. Design, change-lists, writes, and
+verification happen in the root context; bulk reading should usually be
+delegated (see Delegation below). There is no browser flow — if the API
+cannot do something the user asked for, stop and report; never fall back to
+the UI.
 
 Read `references/cli.md` before running commands, `references/expressions.md`
 before composing or reviewing any member content, and
@@ -21,7 +23,11 @@ before composing or reviewing any member content, and
    `ck-ecp config test` and state which environment is active (`ATLAS_ENV` /
    `ACCOUNT_NAME`; **unset means production, atlaslive.io**). The CLI has no
    dry-run and no confirmation prompt — the change-list you show the user IS
-   the confirmation, and it must name the environment.
+   the confirmation, and it must name the environment. In the same breath,
+   state which model YOU are: **write tasks require an Opus-class model or
+   better**. On anything smaller (Sonnet, Haiku), read and design freely but
+   stop before the first mutating command and tell the user to re-run the
+   write on a stronger model.
 2. **Round-trip rule.** `internal-upsert-narrative-instance` is a full
    replace, not a patch. Its own help text warns: *"If mappings of any of the
    inputs, settings, computed metrics, conditions, virtual outputs or actions
@@ -59,6 +65,28 @@ before composing or reviewing any member content, and
    not. Never write from remembered or assumed state; if you have not read it
    this session since the last write, read it again.
 
+## Delegation
+
+Root context is for judgment — keep it semantically dense. Delegate bulk
+reading to parallel subagents on a cheap model (`model: haiku`, or `sonnet`
+for anything needing interpretation): surveying the instances of a large
+narrative in slices, mapping device topology from the blueprint, gathering
+mapping options or cross-narrative references, comparing resource sets
+across blueprint and narrative. Give each subagent a narrow, non-overlapping
+slice; tell it exactly which ck-ecp reads to run and require its report in
+the state-report grammar from `references/cli.md` — expressions VERBATIM,
+empty collections reported, `-` for absent values — so the relay loses
+nothing you'd need for design. What comes back replaces, not accompanies,
+the raw JSON in your context.
+
+Two hard limits:
+
+- **Never write from subagent-reported state.** Subagent reports are a map
+  for design. Before any upsert, the root context re-reads the target
+  instance itself (rail 6) and builds the round-trip body from that read.
+- Change-list composition, user confirmation, writes, and read-back
+  verification never delegate.
+
 ## Workflow
 
 1. **Orient.** Resolve `--internal-org-id` (your own org's UUID), `--org-id`
@@ -71,6 +99,8 @@ before composing or reviewing any member content, and
    `internal-get-site-narrative --view extended`, saved once to a scratch
    file and filtered locally with jq/python (big sites exceed a megabyte;
    never re-fetch what the file answers, but always re-fetch after a write).
+   On big sites or multi-resource surveys, fan the reading out to cheap
+   parallel subagents per the Delegation section.
    If the request is phrased in terms of devices ("every pile") rather than
    instance aliases, resolve them first via `list-devices` (recipe in
    `references/cli.md`). Present current state in the state-report grammar
