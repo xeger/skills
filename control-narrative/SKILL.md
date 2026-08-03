@@ -68,11 +68,15 @@ before composing or reviewing any member content, and
    (`…/narratives/<version>/instances/<alias>/…`). Then the env check.
 2. **Read.** `internal-list-site-narratives --include-draft true` for
    versions, draft existence, active/latest flags. Then
-   `internal-get-site-narrative --view extended` (filter with jq — big sites
-   exceed a megabyte) for the in-scope instances. Present current state in
-   the state-report grammar from `references/cli.md`. Supporting reads as
-   needed: templates, mapping options, `internal-list-expression-functions`,
-   `list-units`, `internal-list-narrative-references`.
+   `internal-get-site-narrative --view extended`, saved once to a scratch
+   file and filtered locally with jq/python (big sites exceed a megabyte;
+   never re-fetch what the file answers, but always re-fetch after a write).
+   If the request is phrased in terms of devices ("every pile") rather than
+   instance aliases, resolve them first via `list-devices` (recipe in
+   `references/cli.md`). Present current state in the state-report grammar
+   from `references/cli.md`. Supporting reads as needed: templates, mapping
+   options, `internal-list-expression-functions`, `list-units`,
+   `internal-list-narrative-references`.
 3. **Design.** Apply `references/expressions.md`. Compose the change-list in
    the format below, then run the proof checklist against it yourself.
 4. **Confirm.** For any non-trivial change — new members, expression edits,
@@ -108,7 +112,8 @@ Compose changes in this grammar before writing anything:
     PUBLISH: no
 
 For new members give every field: name, type (`number|bool|enum|schedule|
-sequence`), unit (by ShortName — `A`, `ton/h`, `none`), description, default,
+sequence`), unit (by ShortName — `A`, `ton/h`, `none`), description (**250
+characters max** — the API rejects longer), default,
 mapping, expression, and for Boolean settings the
 `bool_setting_kind` (`normal` or `one_shot`). State final expression text
 verbatim, character for character, preserving spacing and parenthesization the

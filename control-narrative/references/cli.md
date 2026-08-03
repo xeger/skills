@@ -12,6 +12,15 @@ no dry-run and no confirmation. Read/write endpoint names differ by one word
 (`internal-get-draft-…` vs `internal-delete-draft-…`) — read your command
 back before running it.
 
+**Failure output is huge.** On any client-side validation error the CLI
+prints a one-line error and then a multi-kilobyte usage dump listing every
+endpoint — only the first line matters. Contain it: run body-bearing writes
+as `… > "$SCRATCH/out.json" 2>&1 || true; head -3 "$SCRATCH/out.json"`, and
+inspect the rest of the file only on failure. Better still, avoid the errors:
+use the exact body templates below (the common trap is the undocumented
+required `"view": "default"` field, and the 250-char cap on every
+`description` — see instance-schema.md).
+
 ## Environment & auth
 
 Env comes from `ATLAS_ENV` (or `ACCOUNT_NAME`); **unset defaults to
@@ -75,7 +84,9 @@ validation (`sheet_id` length) — use the default view.
 Newest first. Per version: `Version` (semver; drafts look like
 `N.0.0-draft`, `IsDraft: true`), `IsActive`, `IsLatest`, `ParentVersion`,
 `DeployedAt` (**null = published but never deployed** — the authorization
-ladder cares), `Description`, created/updated audit fields.
+ladder cares), `BlueprintVersion` (an integer — the device-blueprint version
+this narrative binds to; create-draft and `list-devices` need it),
+`Description`, created/updated audit fields.
 
     env ATLAS_ENV=<env> ck-ecp internal-get-site-narrative \
       --internal-org-id <iod> --org-id <org> --agent-id <agent> \
@@ -87,9 +98,12 @@ ladder cares), `Description`, created/updated audit fields.
 - **`--view extended` is required to see `NarrativeInstances` at all** — the
   default view returns the version envelope with an empty instance list.
 - Output can exceed 1 MB on busy sites (one office site: 168 instances,
-  1.2 MB). Always filter, e.g.:
+  1.2 MB). **GET once into a scratch file, then filter locally** — never pull
+  the full JSON into context, and never re-GET what a saved file already
+  answers (re-GET only after a write, per SKILL.md rail 3):
 
-      … --view extended | jq '.NarrativeInstances[] | select(.Alias == "<alias>")'
+      … --view extended > "$SCRATCH/narrative_<version>.json"
+      jq '.NarrativeInstances[] | select(.Alias == "<alias>")' "$SCRATCH/narrative_<version>.json"
 
 Responses use PascalCase keys (`ComputedMetrics`, `ExpressionText`); see
 `instance-schema.md` for the shape and the snake_case mapping upsert needs.
@@ -105,12 +119,37 @@ instance's members — check before renames);
 `internal-list-orphaned-i-o`; `diff-site-narrative-versions`;
 `internal-list-deployments` / `internal-get-current-deployment`.
 
+## Device discovery & topology
+
+When a request is phrased in terms of devices ("every pile", "the stacker
+that feeds X") rather than instance aliases, resolve devices first:
+
+    env ATLAS_ENV=<env> ck-ecp list-devices \
+      --org-id <org> --agent-id <agent> --version <BlueprintVersion> \
+      > "$SCRATCH/devices.json"
+
+`--version` is the integer `BlueprintVersion` from the site-narrative
+envelope (no `--internal-org-id` on this endpoint). Returns `values[]` with
+`ID`, `Alias`, `Name`, `Kind` (device type — filter on this), `Upstream[]` /
+`Downstream[]` (lists of `{DeviceID}` — join through `ID` to walk the
+material-flow topology), and `Properties`. Tie devices to instances through
+the instance's `DeviceAlias`. A device with no matching instance has no
+narrative yet — creating one is a change-list item, not something to skip
+silently.
+
 ## Writing (see instance-schema.md first)
 
 - `internal-create-draft-site-narrative --version <base>` — idempotent:
   returns the existing draft if one exists. One draft per site. Base must be
-  the active or latest version (`0.0.0` for a site's first narrative). Give
-  the body a meaningful `description`; it is user-visible.
+  the active or latest version (`0.0.0` for a site's first narrative). The
+  body requires more than the help suggests — use exactly this shape:
+
+      --body '{"blueprint_version": <BlueprintVersion of base version>,
+               "description": "<user-visible summary of the change>",
+               "is_draft_blueprint": false, "view": "default"}'
+
+  Omitting `view` fails with `value of body.view must be one of "default",
+  "extended" but got value ""` (plus the usage dump).
 - `internal-upsert-narrative-instance --alias <alias>
   --site-narrative-version <draft-version> --body <json>` — creates or
   replaces an instance. FULL REPLACE: round-trip per SKILL.md rail 2.

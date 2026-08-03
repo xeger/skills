@@ -51,6 +51,8 @@ def main():
     body = convert(matches[0])
     # Alias travels in the --alias flag, not the body.
     body.pop("alias", None)
+    # The endpoint rejects bodies without a view field.
+    body["view"] = "default"
     # Omitted collections are CLEARED server-side: materialize every member
     # collection explicitly so a null from GET round-trips as [].
     for coll in ("inputs", "settings", "computed_metrics", "conditions",
@@ -58,6 +60,16 @@ def main():
                  "output_mappings", "overrides"):
         if body.get(coll) is None:
             body[coll] = []
+        for member in body[coll]:
+            desc = member.get("description") if isinstance(member, dict) else None
+            if desc and len(desc) > 250:
+                print(f"WARNING: {coll} member {member.get('name')!r} "
+                      f"description is {len(desc)} chars (max 250)",
+                      file=sys.stderr)
+    desc = body.get("description")
+    if desc and len(desc) > 250:
+        print(f"WARNING: instance description is {len(desc)} chars (max 250)",
+              file=sys.stderr)
     json.dump(body, sys.stdout, indent=1, ensure_ascii=False)
     print()
 

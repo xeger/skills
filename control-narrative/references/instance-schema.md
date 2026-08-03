@@ -16,6 +16,7 @@ send the complete instance.
 ## Body shape (top level)
 
     {
+      "view":                  "default",   <- REQUIRED; omitting it fails
       "narrative_template_id": <GET .NarrativeTemplateID>,
       "narrative_instance_id": <GET .ID>,
       "device_alias":          <GET .DeviceAlias>,
@@ -26,6 +27,13 @@ send the complete instance.
       "alarms": [...], "input_mappings": [...], "output_mappings": [...],
       "overrides": [...]
     }
+
+**Every `description` — instance-level and member-level — is capped at 250
+characters** (client-side validation; the error names the field and comes
+with the full usage dump). Write descriptions to fit from the start; put
+longer rationale in the draft's `description` or the report to the user, not
+in the member. `scripts/to_upsert_body.py` warns on over-length descriptions
+and sets `view` for you.
 
 Strip from the GET object: `OrgID`, `AgentID`, `Version`, `CreatedAt`,
 `CreatedBy`, `UpdatedAt`, `UpdatedBy` (they are path flags or audit fields).
