@@ -57,7 +57,22 @@ before composing or reviewing any member content, and
    list; the draft's version string on get — the CLI requires an explicit
    `--version`). Creating, resetting, or deleting a draft is a user-visible
    act that needs the user's consent, even though create is idempotent.
-6. **Stop, don't guess.** If current state does not match the change-list's
+6. **The instance JSON is not the whole instance.** Instance-level
+   collections carry ONLY custom members; everything else lives on the
+   narrative template and is invisible in the instance body. A collection
+   that reads `null`/`[]` therefore means "no custom members here", NEVER
+   "this instance has no conditions". Before reporting on, designing
+   against, or calling anything missing, resolve each instance's OWN
+   template and merge (recipe in `references/cli.md`): instances that look
+   alike routinely sit on different templates, and the odd one out is
+   usually the interesting one. A name that resolves in
+   `internal-list-narrative-references` but has no instance-level definition
+   is template-defined, not dangling — that endpoint resolves references, so
+   a hit there is evidence the member EXISTS. The UI shows this provenance
+   ("Template Defined Conditions", with a lock); the API does not, so you
+   must reconstruct it. Never report a member as missing, dangling, or
+   unresolved on the strength of the instance body alone.
+7. **Stop, don't guess.** If current state does not match the change-list's
    OLD values (member missing, capitalization differs, expression text
    differs), if an endpoint errors unexpectedly, or if the API lacks a needed
    capability — stop and report precisely what was and was not done. A
@@ -73,17 +88,19 @@ for anything needing interpretation): surveying the instances of a large
 narrative in slices, mapping device topology from the blueprint, gathering
 mapping options or cross-narrative references, comparing resource sets
 across blueprint and narrative. Give each subagent a narrow, non-overlapping
-slice; tell it exactly which ck-ecp reads to run and require its report in
-the state-report grammar from `references/cli.md` — expressions VERBATIM,
-empty collections reported, `-` for absent values — so the relay loses
-nothing you'd need for design. What comes back replaces, not accompanies,
+slice; tell it exactly which ck-ecp reads to run, always including the
+template fetch-and-merge (rail 6) — without it the subagent cannot tag
+members `custom` vs `template`. Require its report in the state-report
+grammar from `references/cli.md` — expressions VERBATIM, empty collections
+reported, `-` for absent values — so the relay loses nothing you'd need for
+design. What comes back replaces, not accompanies,
 the raw JSON in your context.
 
 Two hard limits:
 
 - **Never write from subagent-reported state.** Subagent reports are a map
   for design. Before any upsert, the root context re-reads the target
-  instance itself (rail 6) and builds the round-trip body from that read.
+  instance itself (rail 7) and builds the round-trip body from that read.
 - Change-list composition, user confirmation, writes, and read-back
   verification never delegate.
 
@@ -103,9 +120,17 @@ Two hard limits:
    parallel subagents per the Delegation section.
    If the request is phrased in terms of devices ("every pile") rather than
    instance aliases, resolve them first via `list-devices` (recipe in
-   `references/cli.md`). Present current state in the state-report grammar
-   from `references/cli.md`. Supporting reads as needed: templates, mapping
-   options, `internal-list-expression-functions`, `list-units`,
+   `references/cli.md`).
+   **Then resolve templates before reporting anything** (rail 6): collect the
+   distinct `NarrativeTemplateID`s across the instances in scope, fetch each
+   once with `internal-get-narrative-template`, and merge template members
+   with instance members so every collection is complete. This is not
+   optional and not "as needed" — an unmerged read is unreportable, because
+   its empty collections are indistinguishable from genuinely empty ones.
+   Present the merged state in the state-report grammar from
+   `references/cli.md`, tagging every member `custom` or `template`.
+   Supporting reads as needed: mapping options,
+   `internal-list-expression-functions`, `list-units`,
    `internal-list-narrative-references`.
 3. **Design.** Apply `references/expressions.md`. Compose the change-list in
    the format below, then run the proof checklist against it yourself.

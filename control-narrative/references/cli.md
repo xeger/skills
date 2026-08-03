@@ -108,9 +108,52 @@ this narrative binds to; create-draft and `list-devices` need it),
 Responses use PascalCase keys (`ComputedMetrics`, `ExpressionText`); see
 `instance-schema.md` for the shape and the snake_case mapping upsert needs.
 
+Known wart: a draft's version string from the list (`16.0.0-draft`) is
+REJECTED by `internal-get-site-narrative --version` with `site narrative
+version 16.0.0-draft not found`, even though the list returns it. If you need
+the draft body and this fails, stop and report — do not report on the parent
+version as though it were the draft.
+
+## Merging template members (do this before reporting)
+
+**An instance body shows only its CUSTOM members.** Template-defined members
+— often the interesting ones, like a `resetDailyCounters` condition every
+other instance maps to — never appear in the instance JSON at any view.
+`"Conditions": null` on an instance means "no custom conditions", not "no
+conditions". The web UI renders the difference ("Template Defined
+Conditions", padlocked, above the custom ones); the API leaves you to
+reconstruct it. Per SKILL.md rail 6, merge before you report:
+
+    jq -r '[.NarrativeInstances[].NarrativeTemplateID] | unique[]' "$SCRATCH/narrative_<version>.json"
+    # then, once per distinct ID:
+    env ATLAS_ENV=<env> ck-ecp internal-get-narrative-template \
+      --internal-org-id <iod> --org-id <org> \
+      --id <templateID> > "$SCRATCH/tmpl_<id>.json"
+
+Take the `NarrativeTemplateID` from **each instance's own body** — never
+assume one template covers the site.
+Sibling instances sharing a naming convention routinely sit on different
+templates — at one quarry, ten `*_performance` instances were on
+`generic_calculator` (a deliberately empty template) while the lone
+`*_global_constants` instance was on `global_constant`, which carried all
+the shared conditions. Assuming one template for the site hides exactly the
+instance you were asked about.
+
+Two gotchas on `internal-get-narrative-template`: it needs BOTH
+`--internal-org-id` and `--org-id` (omitting either yields the
+`must be formatted as a uuid but got value "REQUIRED"` error plus the usage
+dump), and its `--id` is the `NarrativeTemplateID` from the instance, not an
+alias.
+
+Also: `internal-list-narrative-references` RESOLVES references. If a member
+name appears there as a key with consumers listed, that member exists —
+template-defined if the instance body lacks it. A hit is proof of presence,
+never evidence of a dangling reference.
+
 Other reads: `internal-list-narrative-templates --internal-org-id --org-id`
 (returns `values[]` with `Alias`, `DisplayName`, `Version`, `ID`, member
-collections, `Overridables`); `internal-get-narrative-template --id`;
+collections, `Overridables`); `internal-get-narrative-template
+--internal-org-id --org-id --id` (see Merging template members above);
 `internal-list-site-narrative-instance-mapping-options` (the API behind the
 UI's mapping dropdowns; filter by `--mapping-kind input`, `--mapping-type`,
 `--mapping-units`); `internal-list-narrative-references` (who references an
@@ -182,7 +225,12 @@ Present instance state to the user in this shape, rendered from the JSON:
 
 Rules: expressions VERBATIM — exact spacing, capitalization, parentheses;
 member names exactly as stored (flag convention violations in a NOTES block,
-never silently correct); `-` for absent values; report empty collections
-explicitly — "empty" is a finding. Instance-level collections hold only
-custom members; template-defined members come from the template (fetch it
-via `NarrativeTemplateID` when the user needs the full picture).
+never silently correct); `-` for absent values.
+
+The `<custom|template>` tag is REQUIRED on every line, which means you cannot
+render this grammar at all from an unmerged read — that is the point. Report
+a collection as `(empty)` only after the template merge shows it empty on
+BOTH sides; "empty" is a finding, and a false one is worse than none. Before
+`(empty)` reaches the user, ask: did I fetch THIS instance's template, or a
+sibling's? If the merge is impossible (template fetch fails), say
+"instance-level only, template unresolved" rather than "(empty)".

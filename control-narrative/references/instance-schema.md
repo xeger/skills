@@ -103,7 +103,7 @@ Units are ShortName strings from `list-units` (`°F`, `psig`, `%`, `sec`,
 1. GET the draft (`--view extended`), extract the instance, convert to the
    body (script above).
 2. Confirm every OLD value in the change-list against this body — mismatch
-   ⇒ stop (SKILL.md rail 6).
+   ⇒ stop (SKILL.md rail 7).
 3. Apply ONLY the change-list edits.
 4. Upsert; then GET again and diff: NEW values present, DO NOT TOUCH
    unchanged, per-collection member counts did not shrink.
