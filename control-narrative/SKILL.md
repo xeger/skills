@@ -15,7 +15,11 @@ the UI.
 
 Read `references/cli.md` before running commands, `references/expressions.md`
 before composing or reviewing any member content, and
-`references/instance-schema.md` before any write.
+`references/instance-schema.md` before any write. When the task is about a
+DEPLOYED narrative's behavior — reading live values, trending a metric,
+diagnosing a blank card or a suspect zero — read
+`references/runtime-observation.md` first instead of guessing from design
+state.
 
 ## Safety rails (read first)
 
