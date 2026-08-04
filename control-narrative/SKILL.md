@@ -15,11 +15,12 @@ the UI.
 
 Read `references/cli.md` before running commands, `references/expressions.md`
 before composing or reviewing any member content, and
-`references/instance-schema.md` before any write. When the task is about a
-DEPLOYED narrative's behavior — reading live values, trending a metric,
-diagnosing a blank card or a suspect zero — read
-`references/runtime-observation.md` first instead of guessing from design
-state.
+`references/instance-schema.md` before any write. Add `references/alarms.md`
+before authoring or editing an alarm — the alarm collection has constraints
+the schema shape does not show. When the task is about a DEPLOYED narrative's
+behavior — reading live values, trending a metric, diagnosing a blank card or
+a suspect zero — read `references/runtime-observation.md` first instead of
+guessing from design state.
 
 ## Safety rails (read first)
 

@@ -35,6 +35,16 @@ longer rationale in the draft's `description` or the report to the user, not
 in the member. `scripts/to_upsert_body.py` warns on over-length descriptions
 and sets `view` for you.
 
+**No braces in any text field.** `{` … `}` is wildcard-placeholder syntax, so
+a description merely *mentioning* `{w}` is rejected with `wildcard not allowed
+in instance constructs, but placeholder found in the following fields: …`.
+Write "the DailyRuntime metrics", never "`{w}DailyRuntime`". (Alarm `name` and
+`message_template` are the deliberate exception — see `references/alarms.md`.)
+
+**Never discard upsert output.** The endpoint returns errors on stdout with a
+2xx-looking envelope; piping it to `/dev/null` turns a rejected write into a
+silent no-op, and the next GET then reads stale values that look like success.
+
 Strip from the GET object: `OrgID`, `AgentID`, `Version`, `CreatedAt`,
 `CreatedBy`, `UpdatedAt`, `UpdatedBy` (they are path flags or audit fields).
 The instance identity goes in the flags: `--alias`, `--site-narrative-version`
@@ -70,9 +80,12 @@ Units are ShortName strings from `list-units` (`°F`, `psig`, `%`, `sec`,
   `expression_text`.
 - **action**: `{name, description, expression_texts[], expressions{…}}` —
   state-machine transition triggers.
-- **alarm**: `{name, alarm_name, description, control_point, group_name,
-  severity, message_template, activation_condition, deactivation_condition,
-  tags{…}}`.
+- **alarm**: `{name, description, control_point, group_name, severity,
+  message_template, activation_condition, deactivation_condition, tags{…}}`
+  — exactly nine fields. There is **no `alarm_name`** on an alarm member;
+  that field exists only on an `alarm_override` (see overrides below).
+  Authoring one has more constraints than the shape suggests — read
+  `references/alarms.md` before writing an alarm.
 - **validations** (all member kinds): `{min_value, max_value, min_length,
   max_length, enum[], pattern, sequence_items[], expected_output_mapping}` —
   null/absent when unused.
@@ -80,8 +93,11 @@ Units are ShortName strings from `list-units` (`°F`, `psig`, `%`, `sec`,
 ## Mappings
 
 - **input_mappings[]**: `{input_name, kind, source_name, …}` where `kind` is
-  one of `control_point_alias` (device I/O; also set
-  `control_point_alias`, `source_name: "OAS"`), or `condition_name` /
+  one of `control_point_alias` (device I/O; also set `control_point_alias`,
+  and `source_name` = the **controller name**, e.g. `TPS48EH201`,
+  `S4265104` — take it from the `SourceName` field of
+  `internal-list-site-narrative-instance-mapping-options`, do not guess),
+  or `condition_name` /
   `computed_metric_name` / `setting_name` / `output_name` (consume another
   instance's construct; set the matching `*_name` field and `source_name` to
   the source instance's alias). Discover candidates with
