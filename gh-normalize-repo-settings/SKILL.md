@@ -13,7 +13,7 @@ from `crossnokaye/gaia`. Dry-run by default; mutates only on `--apply`.
 
 **In scope** (the policy keys in `desired-repo-settings.json`, applied in a
 single PATCH to the repo object):
-- Features: `has_issues`, `has_projects`, `has_wiki`, `has_downloads`,
+- Features: `has_issues`, `has_projects`, `has_wiki`,
   `has_discussions`, `allow_forking`
 - Merge / PR policy: `allow_squash_merge`, `allow_merge_commit`,
   `allow_rebase_merge`, `allow_auto_merge`, `delete_branch_on_merge`,
@@ -63,7 +63,7 @@ wiki/projects/discussions/forking off.
 To re-seed the template from a model repo:
 ```bash
 gh api repos/crossnokaye/gaia --jq '{
-  has_issues, has_projects, has_wiki, has_downloads, has_discussions,
+  has_issues, has_projects, has_wiki, has_discussions,
   allow_forking, allow_squash_merge, allow_merge_commit, allow_rebase_merge,
   allow_auto_merge, delete_branch_on_merge, allow_update_branch,
   use_squash_pr_title_as_default, squash_merge_commit_title,
