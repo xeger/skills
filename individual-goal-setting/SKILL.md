@@ -102,6 +102,11 @@ Use these as the refinement worksheet. Skip any the user has already answered.
 | Goal depends on another team's work | Outcome decided by a team you don't control; you can do everything right and still miss | Narrow scope to your team's direct influence, or name the dependency as a stated risk |
 | Inventing baselines or targets to fill in the worksheet | Goal looks crisp but rests on fiction; review converges on fake numbers | Never fabricate — ask the user for the real figures, or mark "TBD: needs baseline" |
 
+## Related skills
+
+- **`planning-api`** — if the goal is a quarterly or annual rock that will be handed from Strategy to Execution, load `planning-api` as well. This skill decides whether the goal is *good*; that one decides what *shape* it must take (Outcome Contract → Execution Options). Run one interview, not two: its mapping table says which of the questions above feed which contract field.
+- **`feedback-conversations`** — if the goal originated in feedback the user gave or received (a growth goal rather than a business goal), that skill holds the conversation context; anchor the goal to the specific behavior and impact that prompted it.
+
 ## When NOT to use
 
 - Status updates or progress reports — this is for goal authoring, not tracking.
