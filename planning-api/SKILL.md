@@ -1,166 +1,256 @@
 ---
 name: planning-api
-description: Use when structuring, drafting, or reviewing a quarterly or annual goal ("rock") as a Planning API exchange between Strategy and Execution — writing an Outcome Contract (purpose, base/ideal end state, evidence, guardrails) or producing/critiquing 1–3 Execution Options (approach, resources, scope, effort, risks, off-ramps, suggestion). Triggers on "outcome contract", "planning API", "execution options", "off-ramps", "base end state", or when a strategist and a team need to agree on what success means before deciding how to get there. Always overlays the individual-goal-setting skill.
+description: Use when a technical strategist or an execution team member needs to do their part of a Planning API exchange for a quarterly or annual goal ("rock") — interviews the strategist until they can issue a crisp Outcome Contract (the "call": purpose, base/ideal end state, evidence, guardrails), or interviews the team until they can return crisp Execution Options (the "response": approach, resources, scope, effort, risks, off-ramps, suggestion). Also reviews a drafted call or response. Triggers on "planning API", "outcome contract", "execution options", "off-ramps", "base end state", "help me write my rock", or when Strategy and a team need to agree on what success means before deciding how to get there. Overlays the individual-goal-setting skill.
 ---
 
 # The Planning API
 
 ## Overview
 
-Strategy and execution often operate at the wrong level of abstraction. Strategy defines success too vaguely to support resourcing and tradeoffs, or too specifically by prescribing implementation. The result is churn, unclear ownership, and repeated alignment work.
+The Planning API is CrossnoKaye's interface between Strategy and Execution for goals and rocks. It is defined in the standards doc:
 
-The Planning API is an **interface contract** between the two sides. Strategy publishes an **Outcome Contract** that says what must be true and why. Execution responds with **1–3 Execution Options** that say how it could be achieved and what it costs. The two sides then choose an option together and that becomes the plan.
+**[The Planning API](https://docs.google.com/document/d/1ILL-XBJ4RAidA6KsrMBovu3ruuF5rikb78IwKuk9j0o/edit?tab=t.0)** (Chris Rathgeb, Sept 2026)
 
-This skill imposes that contract as a constraint on goal discussions. It does not replace goal-quality reasoning — see *Relationship to individual-goal-setting* below.
+That doc is the source of truth for *which fields exist*. If it and this skill disagree, the doc wins — re-read it when the user says it has changed, or when a field here looks unfamiliar to them.
 
-## Relationship to individual-goal-setting
+The exchange has two messages:
 
-**Always load `individual-goal-setting` alongside this skill.** It owns goal *quality* (output over activity, SMART, leading indicators, no invented numbers). This skill owns goal *shape* (the fields each side must fill in and the handshake between them).
+| | Who sends it | Artifact | Says |
+|---|---|---|---|
+| **Call** | Strategy (the technical strategist, "TS") | **Outcome Contract** | What must be true, and why. Never how. |
+| **Response** | Execution (the team) | **1–3 Execution Options** | How it could be done, and what each way costs. |
 
-When both are active:
+Strategy and Execution then choose an option together; contract + chosen option is the plan.
 
-- The goal-setting worksheet's answers feed the Outcome Contract. Use the mapping table below rather than running two separate interviews.
-- The goal-setting criteria checklist still applies to the *Evidence of success* field. An Outcome Contract whose evidence is activity-based or lagging-only is not ready.
-- The goal-setting rule against fabricating baselines, targets, or commitments applies to every field on both sides of the API. Mark unknowns as `TBD` and say who owns resolving them.
-- If the two skills seem to conflict, the Planning API decides *which fields exist*; individual-goal-setting decides *whether a field's content is good enough*.
+This skill does not write either message for the user. It **interviews** them — one field at a time, pushing back on vague answers — until the message is crisp enough to send, then renders it.
 
-### Worksheet → Outcome Contract mapping
+## Step 0 — Which side are you on?
 
-| Outcome Contract field | Fed by goal-setting worksheet questions |
-|---|---|
-| Purpose | 2 Intent & mission link · 3 Company-goal alignment · 6 User/customer impact · 7 Business impact |
-| Base end state | 5 Activity → output · 10 Commitment level (the **must-do** portion) |
-| Ideal end state | 10 Commitment level (the **aspirational** portion), if any |
-| Evidence of success | 8 SMART tightening · 9 Leading indicators |
-| Guardrails | *(not covered by the worksheet — must be elicited separately)* |
+Establish this before anything else. If it isn't obvious from the request, ask:
 
-Worksheet questions 1, 4, and 11 (current wording, tightening, enhanced wording) still run; the enhanced wording becomes the one-line headline of the Outcome Contract.
+- **"I own the goal and need to hand it to a team"** → you are making the **call**. Go to *Making the call*.
+- **"I've been handed a goal and need to say how we'd do it"** → you are writing the **response**. Go to *Writing the response*.
+- **"I have a draft and want it checked"** → go to *Reviewing a draft*.
 
-## The contract
+A TS sometimes sits on both sides. Run the two interviews separately and in order — finish the call before starting the response — so the *what* is settled before the *how* can leak into it.
 
-### From Strategy: the Outcome Contract
+## How to run the interview
 
-One per Goal or Rock. All five fields are required.
+These rules apply to both sides.
 
-| Field | Definition | Not ready if… |
-|---|---|---|
-| **Purpose** | Why this matters: the business, customer, or engineering problem being solved | It names a deliverable instead of a problem; it doesn't ladder to a company goal |
-| **Base end state** | The minimum set of conditions that must be true to call the effort successful | It describes work done rather than conditions true; it contains "and/or"; it is secretly the ideal state |
-| **Ideal end state** | Additional conditions to aim for if capacity, time, and risk allow | It is indistinguishable from base; it is unbounded ("as much as possible") |
-| **Evidence of success** | Measurements that show the end state has actually been achieved | No baseline; no leading indicator; measurement doesn't exist and nobody owns building it |
-| **Guardrails** | Constraints and non-negotiables: architectural, experience, security, cost, timing, etc. | It prescribes an implementation (that's an Approach, not a guardrail); it is empty ("no constraints" is almost never true) |
+1. **Harvest first.** Read everything the user has already given (pasted goal, doc, ticket, notes) and pre-fill what you can. Show them what you extracted per field and mark each field *answered*, *partial*, or *missing*. Never re-ask an answered question.
+2. **Ask in field order, a few questions at a time.** One field per turn, or two when they are tightly coupled (Base + Ideal; Risks + Off-ramps). Do not dump the whole questionnaire.
+3. **Test every answer against its crispness test.** If it fails, say specifically why and ask the follow-up probe. Do not accept an answer to be polite, and do not move on with a silently weak field.
+4. **Play the answer back in contract wording.** After each field, restate it as it would appear in the artifact and get a yes/no. People spot errors in a restatement that they miss in their own words.
+5. **Never invent content.** No fabricated baselines, targets, dates, estimates, names, or availability. If the user doesn't know, record `TBD (owner, by when)`. You may offer *candidate* phrasings or *categories* to consider, clearly labeled as suggestions.
+6. **Loop until done.** The message is ready when every field passes its test, or fails only by an explicit `TBD` the user has chosen to send with. State which it is. Then render the template.
+7. **Keep the running draft visible.** After every couple of fields, show the artifact so far, so the user always knows how close they are.
 
-**The line Strategy must not cross:** the Outcome Contract says what and why. It never says how. If a draft contract contains a technology choice, a sequence of tasks, or a team assignment, move it to Guardrails only if it is genuinely non-negotiable; otherwise delete it and let Execution propose it in an Option.
+**Goal quality comes from `individual-goal-setting`.** Load it alongside this skill. Its principles (output not activity, leading not lagging, no invented numbers) and criteria checklist are what "crisp" means for Purpose, end states, and Evidence. Run *this* interview, not its worksheet as a second one; the mapping at the bottom shows which worksheet questions each field covers.
 
-### From Execution: 1–3 Execution Options
+## Making the call (Strategy → Outcome Contract)
 
-Each option is a self-contained proposal that satisfies the Base end state within the Guardrails. Each option has seven parts; the set has one Suggestion.
+One contract per goal or rock. Five fields, all required. Start by asking for the goal as currently worded, then work down.
 
-| Field | Definition | Not ready if… |
-|---|---|---|
-| **Approach** | A proposed way to achieve the outcome while respecting the guardrails | It violates a guardrail; it achieves something other than the base end state |
-| **Resources** | People, skills, and capacity needed | Named people have no stated availability; a required skill isn't on the team and isn't flagged |
-| **Scope** | The specific work included in this option | It can't be distinguished from the other options' scope; it hides work in "etc." |
-| **Effort** | An effort estimate and/or expected completion date | There is no date and no size; the estimate has no stated confidence |
-| **Risks** | Uncertainties, dependencies, and ways this option fails | Only external risks are listed; no dependency on another team is named |
-| **Off-ramps** | Predefined ways to reduce scope, and the impact of each on outcome and resourcing | An off-ramp drops the *base* end state (that's failure, not an off-ramp); impact isn't stated |
-| **Suggestion** *(once per set)* | Which option the team recommends, and why | No reason given; the reason is only "it's easiest" |
+### 1. Purpose
+*Why this matters — the business, customer, or engineering problem being solved.*
 
-**Why 1–3 and not 1:** a single option forces Strategy into accept/reject. Two or three options expose the real tradeoff (speed vs. completeness vs. risk) so the choice is a *strategy* decision, not an engineering one. Options should differ in a way Strategy cares about — not three flavors of the same plan.
+Ask:
+- What problem exists today, and who feels it?
+- What happens if we don't do this, this quarter?
+- Which company goal does this serve?
 
-### The handshake
+**Crisp when:** it names a problem and who has it, not a deliverable; someone outside the team would understand why it beats other uses of the quarter.
+**Probe if weak:** "That describes something we'd build. What gets better, and for whom, once it exists?"
 
-1. Strategy publishes the Outcome Contract.
-2. Execution reads it and may push back on *the contract itself* (unclear purpose, conflicting guardrails, unmeasurable evidence) before writing options. Fix the contract first.
-3. Execution publishes 1–3 Options with a Suggestion.
-4. Strategy and Execution choose an option together. The chosen option plus the contract is the plan.
-5. Record the chosen option's Off-ramps as the pre-agreed scope-reduction path; invoking one later is a notification, not a renegotiation.
+### 2. Base end state
+*The minimum set of conditions that must be true to call the effort successful.*
 
-## Workflow
+Ask:
+- At the end of the period, what must be true that isn't true today?
+- If only one of those came true, would you still call it a success? Which one?
+- Is there anything here you'd be disappointed, but not surprised, to miss? (That belongs in Ideal.)
 
-Determine which side of the API the user is on, then run the matching mode. A technical strategist may legitimately sit on both sides; keep the roles separate in the output even when one person writes both.
+**Crisp when:** each item is a condition that will be plainly true or false on the date — not work performed; the list is the genuine minimum; there is a date.
+**Probe if weak:** "That's a task. If the team finished it and nothing else changed, would you be satisfied? What would you look at to decide?"
 
-### Mode A — Drafting an Outcome Contract (Strategy side)
+### 3. Ideal end state
+*Additional conditions to aim for if capacity, time, and risk allow.*
 
-1. Load `individual-goal-setting` and run its worksheet, batching questions.
-2. Additionally elicit **Guardrails**. Ask: what would make a technically successful result unacceptable? (architecture, UX, security, cost, dates, compatibility, team boundaries)
-3. Split the enhanced goal's commitment into **Base** (must-do) and **Ideal** (aspirational). If the user only has one, ask whether the stretch exists or whether the whole thing is base.
-4. Strip any *how* that leaked in. List what you removed so the user can promote it to a guardrail if it is truly non-negotiable.
-5. Render the contract in the template below. Apply the *Not ready if…* column; name any failing field.
+Ask:
+- If this went better than expected, what else would be true?
+- Where does it stop — what is explicitly *beyond* ideal and out of bounds?
 
-### Mode B — Producing Execution Options (Execution side)
+**Crisp when:** it is distinct from Base, is itself a checkable condition, and has an upper bound. "None — Base is the whole goal" is a valid answer if stated explicitly.
+**Probe if weak:** "'As much as possible' can't be planned against. What's the next concrete condition past Base?"
 
-1. Require an Outcome Contract as input. If none exists, run Mode A first or ask for it — do not invent one from a verbal goal.
-2. Check the contract for defects and surface them before drafting options.
-3. Elicit 1–3 approaches from the user. Do not invent approaches the team hasn't proposed; you may *suggest* axes of variation (scope, sequencing, build vs. buy, team split) to help them find a second or third.
-4. For each approach, fill the seven fields. Mark unknown effort, availability, or dependencies as `TBD (owner)`.
-5. Ensure every option's Off-ramps preserve the Base end state. Ensure the Suggestion gives a reason tied to Purpose or Risks.
-6. Render in the template below.
+### 4. Evidence of success
+*Measurements that tell us the end state has actually been achieved.*
 
-### Mode C — Reviewing a submitted contract or option set
+Ask:
+- For each Base condition: what would you look at to know it's true? Where does that number live today?
+- What is it now (baseline) and what must it be (target)?
+- What could we see in the first few weeks that tells us we're on or off track?
+- If the measurement doesn't exist yet, who builds it, and is that part of this goal?
 
-1. Identify which artifact it is.
-2. Check each field against the *Not ready if…* column and (for Evidence of success) the goal-setting criteria checklist.
-3. Report per-field: ✅ ready / ⚠️ weak / ❌ not ready, with the specific defect and the question that would fix it.
-4. Do not rewrite silently. Propose rewrites, labeled as proposals.
+**Crisp when:** every Base condition has a measurement with a baseline, target, and date; at least one leading indicator is named; any measurement that doesn't exist has an owner.
+**Probe if weak:** "If two people disagreed at quarter end about whether this succeeded, what would settle it?"
 
-## Output templates
+### 5. Guardrails
+*Constraints and non-negotiables — architectural, experience, security, cost, timing, etc.*
 
-### Outcome Contract
+Ask:
+- What would make a result unacceptable even if it hit every Base condition?
+- Walk the categories: architecture/platform, customer or operator experience, safety and security, cost/budget, dates and external commitments, compatibility, team or ownership boundaries. Anything in each?
+- For each: is it truly non-negotiable, or a strong preference?
+
+**Crisp when:** each guardrail is a constraint on the solution, not a solution; each is non-negotiable; the list isn't empty without an explicit reason.
+**Probe if weak:** "'Use X' is an approach. What are you protecting by requiring X? State that, and let the team decide whether X is how to honor it."
+
+### Before rendering: the how-leak check
+
+Re-read the whole draft for *how*: technology choices, task sequences, named assignees, architecture. For each, ask the user: non-negotiable (→ rewrite as a Guardrail stating what it protects) or preference (→ remove; mention it to the team informally)? List what was removed. The call says what and why; choosing how is the response's job.
+
+### Template — the call
 
 ```
-## Outcome Contract: <enhanced goal headline>
+## Outcome Contract: <one-line goal, output-focused, with date>
 
 **Purpose.** …
-**Base end state.** (must-do, 100%)
+
+**Base end state.** (must be true by <date>)
 - …
-**Ideal end state.** (aspirational, ~70%)
+
+**Ideal end state.** (if capacity, time, and risk allow)
 - …
+
 **Evidence of success.**
-- Lagging: <metric> from <baseline> to <target> by <date>
+- <Base condition> → <metric> from <baseline> to <target> by <date>
 - Leading: <signal> visible by <week N>
+
 **Guardrails.**
 - …
+
+**Open items.** <TBD (owner, by when)> — or "none"
 ```
 
-### Execution Options
+## Writing the response (Execution → Execution Options)
+
+**Input required: the Outcome Contract.** Ask for it. If there isn't one, do not reconstruct it from a verbal goal — send the user to their strategist, or run *Making the call* with whoever owns the goal.
+
+### First: can you accept the call?
+
+Before any options, read the contract with the user and ask:
+- Could you tell, on the date, whether each Base condition is true? Which ones are ambiguous?
+- Do any guardrails conflict with each other or with the Base end state?
+- Does any guardrail dictate the approach, leaving you nothing to decide?
+- Can the Evidence actually be measured?
+
+If anything fails, the right response is **a pushback on the call**, not options built on a guess. Help the user write the specific question to send back to Strategy, and stop there until it's resolved (or the user decides to proceed with a stated assumption, recorded in the response).
+
+### Then: find the options
+
+Ask:
+- What's the first way you'd do this?
+- What would you do if you had half the time? If a key person weren't available? If you could buy or reuse instead of build?
+- Which of these differ in a way your strategist would care about — speed, completeness, risk, cost?
+
+One option is allowed when there is honestly one viable way; say why. Two or three should differ on an axis Strategy cares about, not be three flavors of one plan. The approaches must come from the team — you may suggest axes of variation, not invent options.
+
+### For each option
+
+**Approach** — *a proposed way to achieve the outcome while respecting the guardrails.*
+Ask: In two or three sentences, how does this get to the Base end state? Which guardrails shape it?
+**Crisp when:** a strategist can follow it without the team in the room; it reaches Base; it violates no guardrail.
+
+**Resources** — *the people, skills, and capacity needed.*
+Ask: Who, at what fraction of their time, for how long? Is any needed skill missing from the team? What are these people *not* doing instead?
+**Crisp when:** capacity is stated per person or role, with known PTO and competing commitments accounted for; gaps are flagged.
+
+**Scope** — *the specific work included in this option.*
+Ask: What are the major pieces of work? What is explicitly out? What does this option include that the others don't?
+**Crisp when:** in and out are both listed; no "etc."; it is distinguishable from the other options' scope.
+
+**Effort** — *an effort estimation or expected completion date.*
+Ask: When would this be done, or how big is it? How confident are you, and what would move the date?
+**Crisp when:** there is a date or a size, a confidence level (high/medium/low), and the main thing the estimate depends on.
+**Probe if weak:** "What would have to be true for that date to hold? Which of those are you least sure of?"
+
+**Risks** — *uncertainties, dependencies, or ways this option fails.*
+Ask: What don't you know yet? Which other teams, vendors, or sites must deliver something? If this option failed, what's the most likely reason?
+**Crisp when:** it includes internal uncertainties as well as external ones; each dependency names who and what; the likeliest failure is stated.
+
+**Off-ramps** — *predefined ways to reduce scope, and the impact on outcome and resourcing.*
+Ask: If you were running late, what would you cut first? What does cutting it cost the outcome, and what does it free up? By when would you need to decide?
+**Crisp when:** each off-ramp states what is cut, the effect on the Ideal/Base end state, and the capacity or time recovered. An off-ramp that gives up a Base condition must say so plainly — taking it means reopening the contract, not quietly proceeding.
+
+### Once for the set: Suggestion
+*Which option the team recommends.*
+
+Ask: Which would you pick, and why? What would change your mind?
+**Crisp when:** it names one option and gives a reason tied to the Purpose, the end states, or the Risks — not just "it's least work".
+
+### Template — the response
 
 ```
 ## Execution Options for: <contract headline>
 
+**Assumptions / open questions on the contract.** … — or "none"
+
 ### Option 1 — <short name>
 **Approach.** …
 **Resources.** …
-**Scope.** …
-**Effort.** <size/date, confidence>
+**Scope.** In: … Out: …
+**Effort.** <date or size> — confidence <high/med/low>; depends on …
 **Risks.** …
 **Off-ramps.**
-- <reduction> → impact on outcome: … ; impact on resourcing: …
+- <cut> → outcome impact: … ; frees: … ; decide by: …
 
 ### Option 2 — …
 
 **Suggestion.** Option N, because …
 ```
 
-## Common Mistakes
+## Reviewing a draft
 
-| Mistake | Result | Fix |
-|---|---|---|
-| Base end state written as a task list | Team finishes the tasks and nobody can say whether the goal succeeded | Rewrite each bullet as a condition that is true or false at quarter end |
-| Ideal state that is just "base, but more" with no bound | Infinite scope creep under the banner of "ideal" | Give ideal its own measurable conditions and a stopping point |
-| Guardrail that is actually an approach ("use Kafka") | Strategy has silently taken the engineering decision; execution options collapse to one | Ask: is this non-negotiable, or a preference? Preferences move to the Suggestion rationale |
-| Empty guardrails | Execution proposes something strategically unacceptable; alignment work repeats | Prompt for the standard categories; "none" needs an explicit justification |
-| One option presented as three | Strategy has no real choice; the exercise is theater | Options must differ on an axis Strategy cares about |
-| Off-ramp that abandons the base end state | What's called a reduction is actually a failure mode in disguise | Off-ramps trim Ideal and Scope only; dropping Base is a renegotiation of the contract |
-| Effort without a date or a confidence | The LOE can't be tracked and slippage is invisible | State size and/or date, plus confidence (high/med/low) and what would change it |
-| Inventing a baseline, estimate, or availability to fill the template | Looks complete, rests on fiction | `TBD (owner)` — never fabricate (inherited from individual-goal-setting) |
+1. Identify whether it is a call or a response, and (for a response) get the call it answers.
+2. Check each field against its **Crisp when** test.
+3. Report per field: ✅ crisp / ⚠️ weak / ❌ missing, with the specific defect and the one question that would fix it.
+4. Offer to run the interview on the failing fields. Propose rewrites only as labeled proposals — never silently rewrite, never fill gaps with invented content.
+
+## After both messages exist
+
+Strategy and Execution choose an option together. Record the chosen option's off-ramps as the pre-agreed scope-reduction path. The doc does not yet define what happens in flight (requirement changes, resourcing changes, declaring done) — a "Runtime API" has been proposed in its comments and left to teams. Don't stretch the Planning API to cover it; note the gap.
+
+## Common ways a message isn't crisp
+
+| Symptom | What to ask |
+|---|---|
+| Base end state is a task list | "If all of that got done and nothing changed, did we succeed?" |
+| Ideal is "Base, but more" | "What's the next concrete condition, and where does it stop?" |
+| Guardrail names a technology or design | "What does that protect? State the constraint, not the solution." |
+| Guardrails empty | Walk the categories; "none" needs a stated reason |
+| Evidence has no baseline | "What is it today, and where would I look it up?" — else `TBD (owner)` |
+| Three options that are one plan | "Which of these would your strategist choose differently between?" |
+| Effort with no confidence | "What would have to be true for that date to hold?" |
+| Off-ramp silently drops Base | "That gives up a must-have — it's a renegotiation. Say so explicitly." |
+| A number nobody actually knows | `TBD (owner, by when)` — never fabricate |
+
+## Field ↔ individual-goal-setting worksheet
+
+So the user is interviewed once:
+
+| Outcome Contract field | Covers worksheet questions |
+|---|---|
+| Headline | 1 Current wording · 4 Tightening · 11 Enhanced wording |
+| Purpose | 2 Intent & mission link · 3 Company-goal alignment · 6 User/customer impact · 7 Business impact |
+| Base end state | 5 Activity → output · 10 Commitment level (must-do) |
+| Ideal end state | 10 Commitment level (aspirational) |
+| Evidence of success | 8 SMART tightening · 9 Leading indicators |
+| Guardrails | *(not in the worksheet)* |
 
 ## When NOT to use
 
-- Work under ~2 weeks or a single ticket — the contract is overkill; write the task.
-- Pure status or progress updates — that is the proposed "Runtime API" (requirements changes, done-ness, resourcing changes), which is not yet defined. Note the gap rather than stretching this contract to cover it.
-- Externally fixed deliverables (regulatory, contractual) where neither end state nor approach is negotiable — fill the contract for the record, but skip the options exercise.
-
-## Source
-
-Chris Rathgeb, *The Planning API* (internal Google Doc, Sept 2026). Open items at time of writing: an "Effort / expected completion date" field was added in response to review; a "Runtime API" for in-flight changes was proposed and deferred to teams.
+- Work under ~2 weeks or a single ticket — write the task.
+- Status or progress updates on a plan already agreed — that's the undefined "Runtime API".
+- Externally fixed deliverables (regulatory, contractual) where neither the end state nor the approach is negotiable — fill in the contract for the record; skip the options.
